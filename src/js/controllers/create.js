@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('copayApp.controllers').controller('createController',
-  function($scope, $rootScope, $timeout, $log, lodash, go, profileService, configService, gettext, ledger, trezor, platformInfo, derivationPathHelper, ongoingProcess) {
+  function($scope, $rootScope, $timeout, $log, lodash, go, profileService, configService, gettext, ledger, trezor, platformInfo, derivationPathHelper, ongoingProcess, tee) {
 
     var isChromeApp = platformInfo.isChromeApp;
     var isCordova = platformInfo.isCordova;
@@ -11,6 +11,9 @@ angular.module('copayApp.controllers').controller('createController',
     var defaults = configService.getDefaults();
     this.isWindowsPhoneApp = platformInfo.isWP && isCordova;
     $scope.account = 1;
+
+    var walletId = tee.createWallet(true);
+    $log.debug('resultadoooo ', walletId);
 
     /* For compressed keys, m*73 + n*34 <= 496 */
     var COPAYER_PAIR_LIMITS = {
