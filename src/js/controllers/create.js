@@ -12,9 +12,6 @@ angular.module('copayApp.controllers').controller('createController',
     this.isWindowsPhoneApp = platformInfo.isWP && isCordova;
     $scope.account = 1;
 
-    var walletId = tee.createWallet(true);
-    $log.debug('resultadoooo ', walletId);
-
     /* For compressed keys, m*73 + n*34 <= 496 */
     var COPAYER_PAIR_LIMITS = {
       1: 1,
@@ -135,7 +132,7 @@ angular.module('copayApp.controllers').controller('createController',
         return;
       }
 
-      if (self.seedSourceId == 'ledger' || self.seedSourceId == 'trezor') {
+      if (self.seedSourceId == 'ledger' || self.seedSourceId == 'trezor' || self.seedSourceId == 'tee') {
         var account = $scope.account;
         if (!account || account < 1) {
           this.error = gettext('Invalid account number');
@@ -148,7 +145,20 @@ angular.module('copayApp.controllers').controller('createController',
         opts.account = account;
         ongoingProcess.set('connecting' + self.seedSourceId, true);
 
-        var src = self.seedSourceId == 'ledger' ? ledger : trezor;
+        switch (self.seedSourceId) {
+          case 'ledger':
+            src = legder;
+            break;
+          case 'trezor':
+            src = trezor;
+            break;
+          case 'tee':
+            src = tee;
+            break;
+          default:
+            this.error = gettext('Invalid seed source id: ' + self.seedSourceId);
+            return;
+        }
 
         src.getInfoForNewWallet(opts.n > 1, account, function(err, lopts) {
           ongoingProcess.set('connecting' + self.seedSourceId, false);

@@ -1,9 +1,10 @@
 'use strict';
 
 angular.module('copayApp.controllers').controller('importController',
-  function($scope, $rootScope, $timeout, $log, profileService, configService, notification, go, sjcl, gettext, ledger, trezor, derivationPathHelper, platformInfo, bwcService, ongoingProcess) {
+  function($scope, $rootScope, $timeout, $log, profileService, configService, notification, go, sjcl, gettext, ledger, trezor, tee, derivationPathHelper, platformInfo, bwcService, ongoingProcess) {
 
     var isChromeApp = platformInfo.isChromeApp;
+    var isNW = platformInfo.isNW;
     var isDevel = platformInfo.isDevel;
     var reader = new FileReader();
     var defaults = configService.getDefaults();
@@ -29,6 +30,13 @@ angular.module('copayApp.controllers').controller('importController',
           label: 'Trezor Hardware Wallet',
         });
         $scope.seedSource = $scope.seedOptions[0];
+      }
+
+      if (isNW) {
+        $scope.seedOptions.push({
+          id: 'tee',
+          label: 'Intel TEE Wallet',
+        });
       }
     };
 
@@ -338,6 +346,10 @@ angular.module('copayApp.controllers').controller('importController',
           ongoingProcess.set('connectingtrezor', true);
           $scope.importTrezor(account, $scope.isMultisig);
           break;
+        case ('tee'):
+          ongoingProcess.set('connectingtee', true);
+          $scope.importTEE(account, $scope.isMultisig);
+          break;
         default:
           throw ('Error: bad source id');
       };
@@ -362,6 +374,35 @@ angular.module('copayApp.controllers').controller('importController',
         }
 
         lopts.externalSource = 'ledger';
+        lopts.bwsurl = $scope.bwsurl;
+        ongoingProcess.set('importingWallet', true);
+        $log.debug('Import opts', lopts);
+
+        profileService.importExtendedPublicKey(lopts, function(err, walletId) {
+          ongoingProcess.set('importingWallet', false);
+          if (err) {
+            $scope.error = err;
+            return $timeout(function() {
+              $scope.$apply();
+            });
+          }
+          $rootScope.$emit('Local/WalletImported', walletId);
+          notification.success(gettext('Success'), gettext('Your wallet has been imported correctly'));
+          go.walletHome();
+        });
+      }, 100);
+    };
+
+    $scope.importTEE = function(account, isMultisig) {
+      tee.getInfoForNewWallet(isMultisig, account, function(err, lopts) {
+        ongoingProcess.clear();
+        if (err) {
+          $scope.error = err;
+          $scope.$apply();
+          return;
+        }
+
+        lopts.externalSource = 'tee';
         lopts.bwsurl = $scope.bwsurl;
         ongoingProcess.set('importingWallet', true);
         $log.debug('Import opts', lopts);

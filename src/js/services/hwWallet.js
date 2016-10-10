@@ -22,6 +22,7 @@ angular.module('copayApp.services')
 
       // Compat
       if (device == 'ledger' && account ==0) return root.UNISIG_ROOTPATH;
+      if (device == 'tee' && account ==0) return root.UNISIG_ROOTPATH;
 
       return root.MULTISIG_ROOTPATH;
     };
