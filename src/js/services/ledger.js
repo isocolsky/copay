@@ -30,24 +30,27 @@ angular.module('copayApp.services')
       })
     };
 
+    root.initSource = function(opts, callback) {
+      // No initialization for this hardware source.
+      return callback(opts);
+    };
 
-    root.getInfoForNewWallet = function(isMultisig, account, callback) {
-      var opts = {};
-      root.getEntropySource(isMultisig, account, function(err, entropySource) {
+    root.getInfoForNewWallet = function(opts, callback) {
+      var isMultisig = opts.n > 1;
+      root.getEntropySource(isMultisig, opts.account, function(err, entropySource) {
         if (err) return callback(err);
 
         opts.entropySource = entropySource;
-        root.getXPubKey(hwWallet.getAddressPath('ledger', isMultisig, account), function(data) {
+        root.getXPubKey(hwWallet.getAddressPath('ledger', isMultisig, opts.account), function(data) {
           if (!data.success) {
             $log.warn(data.message);
             return callback(data);
           }
           opts.extendedPublicKey = data.xpubkey;
           opts.externalSource = 'ledger';
-          opts.account = account;
 
           // Old ledger compat
-          opts.derivationStrategy = account ? 'BIP48' : 'BIP44';
+          opts.derivationStrategy = opts.account ? 'BIP48' : 'BIP44';
           return callback(null, opts);
         });
       });

@@ -133,7 +133,7 @@
                 <input type="text" class="form-control" name="derivationPath" ng-model="derivationPath">
               </label>
             </div>
-            <div class="oh" ng-show="create.seedSourceId == 'new'">
+            <div class="oh" ng-show="create.seedSourceId == 'new' || create.seedSourceId == 'tee'">
               <ion-toggle ng-model="testnetEnabled" toggle-class="toggle-balanced" class="bct">
                 <span class="toggle-label">Testnet</span>
               </ion-toggle>

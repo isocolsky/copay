@@ -50,6 +50,9 @@ angular.module('copayApp.controllers').controller('createController',
         id: 'new',
         label: gettext('Random'),
       }, {
+        id: 'tee',
+        label: gettext('Intel TEE'),
+      }, {
         id: 'set',
         label: gettext('Specify Recovery Phrase...'),
       }];
@@ -145,6 +148,7 @@ angular.module('copayApp.controllers').controller('createController',
         opts.account = account;
         ongoingProcess.set('connecting' + self.seedSourceId, true);
 
+        var src;
         switch (self.seedSourceId) {
           case 'ledger':
             src = legder;
@@ -160,7 +164,7 @@ angular.module('copayApp.controllers').controller('createController',
             return;
         }
 
-        src.getInfoForNewWallet(opts.n > 1, account, function(err, lopts) {
+        src.getInfoForNewWallet(opts, function(err, lopts) {
           ongoingProcess.set('connecting' + self.seedSourceId, false);
           if (err) {
             self.error = err;
@@ -170,6 +174,7 @@ angular.module('copayApp.controllers').controller('createController',
           opts = lodash.assign(lopts, opts);
           self._create(opts);
         });
+
       } else {
         self._create(opts);
       }

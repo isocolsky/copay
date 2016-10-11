@@ -13,58 +13,56 @@ angular.module('copayApp.services')
       $log.error('Failed to create Intel Wallet enclave');
     }
 
-    root.getInfoForNewWallet = function(isMultisig, account, callback) {
-      var opts = {};
-      root.getEntropySource(isMultisig, account, function(err, entropySource) {
+    root.getInfoForNewWallet = function(opts, callback) {
+      initSource(opts, function(err, opts) {
         if (err) return callback(err);
 
-        opts.entropySource = entropySource;
-        root.getXPubKey(hwWallet.getAddressPath('tee', isMultisig, account), function(data) {
-          if (!data.success) {
-            $log.warn(data.message);
-            return callback(data);
-          }
-          opts.extendedPublicKey = data.xpubkey;
-          opts.externalSource = 'tee';
-          opts.account = account;
-          opts.derivationStrategy = 'BIP44';
+        var isMultisig = opts.n > 1;
+        root.getEntropySource(opts.hwInfo.id, isMultisig, opts.account, function(err, entropySource) {
+          if (err) return callback(err);
 
-          return callback(null, opts);
+          opts.entropySource = entropySource;
+          root.getXPubKey(opts.hwInfo.id, hwWallet.getAddressPath('tee', isMultisig, opts.account), function(data) {
+            if (!data.success) {
+              $log.warn(data.message);
+              return callback(data);
+            }
+            opts.extendedPublicKey = data.xpubkey;
+            opts.externalSource = 'tee';
+            opts.derivationStrategy = 'BIP44';
+
+            return callback(null, opts);
+          });
         });
       });
     };
 
-    root.getXPubKey = function(path, callback) {
+    root.getXPubKey = function(teeWalletId, path, callback) {
       $log.debug('TEE deriving xPub path:', path);
 
-      var walletId = root.createWallet(true, function(data) {
+      // Expected to be a extended public key.
+      var xpubkey = walletEnclave.getPublicKey(teeWalletId, path);
 
-        var result = {
-          success: false, 
-          message: '',
-          xpubkey: ''
-        }
+      // Error messages returned in value.
+      var result = {
+        success: false,
+        message: xpubkey.ExtendedPublicKey
+      };
 
-        if (data.success) {
-          var xpubkey = walletEnclave.getPublicKey(path, data.walletId);
+      // Success indicated by status being equal to the tee wallet id.
+      if (xpubkey.Status == teeWalletId) {
+        result.success = true;
+        result.message = 'OK';
+        result.xpubkey = xpubkey.ExtendedPublicKey;
+      } else {
+        $log.error('Failed to get xpubkey from TEE wallet: ' + result.message);
+      }
 
-          if (xpubkey.status == 0) {
-            result.success = true;
-            result.message = 'OK';
-            result.xpubkey = xpubkey.ExtendedPublicKey;
-          } else {
-            $log.error('Failed to get xpubkey from TEE wallet: ' + xpubkey.message + ' (status=' + xpubkey.status + ')');
-          }
-        } else {
-          result.message = data.message;
-        }
-
-        callback(result);
-      });
+      callback(result);
     };
 
-    root.getEntropySource = function(isMultisig, account, callback) {
-      root.getXPubKey(hwWallet.getEntropyPath('tee', isMultisig, account), function(data) {
+    root.getEntropySource = function(teeWalletId, isMultisig, account, callback) {
+      root.getXPubKey(teeWalletId, hwWallet.getEntropyPath('tee', isMultisig, account), function(data) {
         if (!data.success)
           return callback(hwWallet._err(data));
 
@@ -72,15 +70,9 @@ angular.module('copayApp.services')
       });
     };
 
-    root.createWallet = function (testnet, callback) {
-        var result = {
-          success: false,
-          message: '',
-          walletId: ''
-        };
-
+    function initSource(opts, callback) {
         var args = {
-          "Testnet" : testnet,
+          "Testnet" : (opts.networkName == 'livenet'? false : true),
           "PINUnlockRequired" : false,
           "PINSignatureDataRequired" : false,
           "PINSignatureTransaction" : 0,
@@ -91,17 +83,42 @@ angular.module('copayApp.services')
 
         var teeStatus = walletEnclave.createWallet(TEE_APP_ID, args);
         switch (teeStatus) {
-          case 'CREATE_WALLET_FAILURE':
-            result.message = teeStatus;
+          case "CREATE WALLET FAILURE":
+          case "CREATE WALLET FAILED TO INITIALIZE":
+          case "CREATE WALLET FAILURE BAD INPUT":
+          case "CREATE WALLET FAILURE case SERIALIZATION":
+          case "DELETE_WALLET_AUTHORIZATION_UNSUCCESSFUL":
+          case "LOAD_WALLET_FAILTURE":
+          case "IMPORT WORD LIST FAILTURE":
+          case "IMPORT WORD LIST FAILURE BAD INPUT":
+          case "IMPORT WORD NOT IN DICTIONARY":
+          case "INVALID PIN":
+          case "INVALID APPLICATION ID":
+          case "DISPLAY WORD LIST FAILURE":
+          case "DELETE WALLET NO SUCH APPLICATION ID":
+          case "SIGN DATA FAILURE":
+          case "SIGN DATA INVALID HASH":
+          case "SIGN DATA BUFFER TOO SMALL":
+          case "SIGN DATA INVALID PIN":
+          case "RECEIVE ADDRESS INVALID INPUT":
+          case "RECEIVE ADDRESS NULL":
+          case "RECEIVE ADDRESS BUFFER TOO SMALL":
+          case "PUBLIC KEY BUFFER TOO SMALL":
+          case "LOAD WALLET FAILURE":
+          case "PUBLIC KEY FAILURE":
+          case "PUBLIC KEY FAIL TO SERIALIZE":
+          case "UKNOWN ERROR CODE":
             $log.error(teeStatus);
+            return callback(teeStatus); // TODO: translate error text for display
             break;
           default:
-            result.success = true;
-            result.message = 'OK';
-            result.walletId = teeStatus;
-            $log.debug('TEE wallet created: ' + result.walletId);
+            opts.hwInfo = {
+              name: 'tee',
+              id: teeStatus
+            };
+            $log.debug('TEE wallet created: ' + opts.hwInfo);
+            return callback(null, opts);
         }
-        callback(result);
     };
 
     return root;
