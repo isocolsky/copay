@@ -1,7 +1,7 @@
 'use strict';
 
 // DO NOT INCLUDE STORAGE HERE \/ \/
-angular.module('copayApp.services').factory('walletService', function($log, lodash, trezor, ledger, storageService, configService, uxLanguage) {
+angular.module('copayApp.services').factory('walletService', function($log, lodash, trezor, ledger, tee, storageService, configService, uxLanguage) {
 // DO NOT INCLUDE STORAGE HERE ^^
   
   var root = {};
@@ -30,6 +30,18 @@ angular.module('copayApp.services').factory('walletService', function($log, loda
 
       $log.debug('Trezor response', result);
       txp.signatures = result.signatures;
+      return client.signTxProposal(txp, cb);
+    });
+  };
+
+  var _signWithTEE = function(client, txp, cb) {
+    $log.info('Requesting TEE to sign the transaction');
+
+    tee.signTx(client.credentials.hwInfo.id, txp, function(err, result) {
+      if (err) return cb(err);
+
+      $log.debug('TEE response', result);
+      txp.signatures = result.Signatures;
       return client.signTxProposal(txp, cb);
     });
   };
@@ -132,6 +144,8 @@ angular.module('copayApp.services').factory('walletService', function($log, loda
           return _signWithLedger(client, txp, cb);
         case 'trezor':
           return _signWithTrezor(client, txp, cb);
+        case 'tee':
+          return _signWithTEE(client, txp, cb);
         default:
           var msg = 'Unsupported External Key:' + client.getPrivKeyExternalSourceName();
           $log.error(msg);

@@ -1,14 +1,14 @@
 'use strict';
 
 angular.module('copayApp.services')
-  .factory('tee', function($log, $timeout, gettext, lodash, bitcore, hwWallet) {
+  .factory('tee', function($log, $timeout, gettext, lodash, bitcore, hwWallet, bwcService) {
 
     var root = {};
     var IntelWallet = require('intelWalletCon');
     var TEE_APP_ID = '63279de1b6cb4dcf8c206716bd318092f8c206716bd31809263279de1b6cb4dc';
 
-    var walletEnclave = new IntelWallet.Wallet();
-    var walletEnclaveStatus = walletEnclave.initializeEnclave();
+    root.walletEnclave = new IntelWallet.Wallet();
+    var walletEnclaveStatus = root.walletEnclave.initializeEnclave();
     if (walletEnclaveStatus != 0) {
       $log.error('Failed to create Intel Wallet enclave');
     }
@@ -41,7 +41,7 @@ angular.module('copayApp.services')
       $log.debug('TEE deriving xPub path:', path);
 
       // Expected to be a extended public key.
-      var xpubkey = walletEnclave.getPublicKey(teeWalletId, path);
+      var xpubkey = root.walletEnclave.getPublicKey(teeWalletId, path);
 
       // Error messages returned in value.
       var result = {
@@ -70,6 +70,28 @@ angular.module('copayApp.services')
       });
     };
 
+    root.signTx = function(teeWalletId, txp, callback) {
+      var purpose = 44;
+      var basePath = "m/" + purpose + "'/" + (txp.network == 'livenet' ? "0'" : "1'") + "/0'";
+
+      var rawTx = bwcService.Client.getRawTx(txp);
+      var keypaths = lodash.map(lodash.pluck(txp.inputs, 'path'), function(path) {
+        return path.replace('m', basePath);
+      });
+      var publicKeys = lodash.pluck(txp.inputs, 'publicKeys');
+      var changeaddrpath;
+      if (txp.changeAddress) {
+        changeaddrpath = txp.changeAddress.path.replace('m', basePath);
+      }
+
+      var result = root.walletEnclave.signTransaction(teeWalletId, rawTx, changeaddrpath, keypaths);
+
+      if (result.Status != teeWalletId) {
+        return callback('TEE failed to sign transction: ' + result.Status);
+      }
+      return callback(null, result);
+    };
+
     function initSource(opts, callback) {
         var args = {
           "Testnet" : (opts.networkName == 'livenet'? false : true),
@@ -81,7 +103,7 @@ angular.module('copayApp.services')
           "PINTimeout" : 30
         };
 
-        var teeStatus = walletEnclave.createWallet(TEE_APP_ID, args);
+        var teeStatus = root.walletEnclave.createWallet(TEE_APP_ID, args);
         switch (teeStatus) {
           case "CREATE WALLET FAILURE":
           case "CREATE WALLET FAILED TO INITIALIZE":
