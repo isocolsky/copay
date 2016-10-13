@@ -142,7 +142,7 @@ angular.module('copayApp.controllers').controller('createController',
           return;
         }
 
-        if (self.seedSourceId == 'trezor')
+        if (self.seedSourceId == 'trezor' || self.seedSourceId == 'tee')
           account = account - 1;
 
         opts.account = account;

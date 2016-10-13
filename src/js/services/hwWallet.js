@@ -6,6 +6,7 @@ angular.module('copayApp.services')
 
     // Ledger magic number to get xPub without user confirmation
     root.ENTROPY_INDEX_PATH = "0xb11e/";
+    root.M = 'm/';
     root.UNISIG_ROOTPATH = 44;
     root.MULTISIG_ROOTPATH = 48;
     root.LIVENET_PATH = 0;
@@ -22,7 +23,7 @@ angular.module('copayApp.services')
 
       // Compat
       if (device == 'ledger' && account ==0) return root.UNISIG_ROOTPATH;
-      if (device == 'tee' && account ==0) return root.UNISIG_ROOTPATH;
+      if (device == 'tee' && account ==0) return root.M + root.UNISIG_ROOTPATH;
 
       return root.MULTISIG_ROOTPATH;
     };
