@@ -22,7 +22,7 @@ angular.module('copayApp.services')
           if (err) return callback(err);
 
           opts.entropySource = entropySource;
-          root.getXPubKey(opts.hwInfo.id, hwWallet.getAddressPath('tee', isMultisig, opts.account), function(data) {
+          root.getXPubKey(opts.hwInfo.id, hwWallet.getAddressPath('tee', isMultisig, opts.account, opts.networkName), function(data) {
             if (!data.success) {
               $log.warn(data.message);
               return callback(data);

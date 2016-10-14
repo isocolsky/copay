@@ -10,6 +10,7 @@ angular.module('copayApp.services')
     root.UNISIG_ROOTPATH = 44;
     root.MULTISIG_ROOTPATH = 48;
     root.LIVENET_PATH = 0;
+    root.TESTNET_PATH = 1;
 
     root._err = function(data) {
       var msg = 'Hardware Wallet Error: ' + (data.error || data.message || 'unknown');
@@ -17,29 +18,50 @@ angular.module('copayApp.services')
       return msg;
     };
 
-
     root.getRootPath = function(device, isMultisig, account) {
-      if (!isMultisig) return root.UNISIG_ROOTPATH;
-
-      // Compat
-      if (device == 'ledger' && account ==0) return root.UNISIG_ROOTPATH;
-      if (device == 'tee' && account ==0) return root.M + root.UNISIG_ROOTPATH;
-
-      return root.MULTISIG_ROOTPATH;
+      var path;
+      if (isMultisig) {
+        path = root.MULTISIG_ROOTPATH;
+      } else {
+        if (device == 'ledger' && account > 0) {
+          path = root.MULTISIG_ROOTPATH;
+        } else {
+          path = root.UNISIG_ROOTPATH;
+        }
+      }
+      if (device == 'tee') {
+        path = root.M + path;
+      }
+      return path;
     };
 
-    root.getAddressPath = function(device, isMultisig, account) {
-      return root.getRootPath(device,isMultisig,account) + "'/" + root.LIVENET_PATH + "'/" + account + "'";
+    root.getAddressPath = function(device, isMultisig, account, network) {
+      network = network || 'livenet';
+      var networkPath = root.LIVENET_PATH;
+      if (network == 'testnet') {
+        networkPath = root.TESTNET_PATH;
+      }
+      return root.getRootPath(device, isMultisig, account) + "'/" + networkPath + "'/" + account + "'";
     }
 
     root.getEntropyPath = function(device, isMultisig, account) {
-      var path;
+      var path = root.ENTROPY_INDEX_PATH;
+      if (isMultisig) {
+        path = path + "48'/"
+      } else {
+        path = path + "44'/"
+      }
 
       // Old ledger wallet compat
-      if (device == 'ledger' && account == 0)
-        return root.ENTROPY_INDEX_PATH  + "0'";
+      if (device == 'ledger' && account == 0) {
+        return path + "0'/";
+      }
 
-      return root.ENTROPY_INDEX_PATH + root.getRootPath(device,isMultisig,account) + "'/" + account + "'";
+      if (device == 'tee') {
+        path = root.M + path;
+      }
+
+      return path + account + "'";
     };
 
     root.pubKeyToEntropySource = function(xPubKey) {
