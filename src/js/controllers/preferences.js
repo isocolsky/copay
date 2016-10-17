@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('copayApp.controllers').controller('preferencesController',
-  function($scope, $rootScope, $timeout, $log, configService, profileService, fingerprintService, walletService) {
+  function($scope, $rootScope, $timeout, $log, lodash, configService, profileService, fingerprintService, walletService) {
 
     var fc;
     var config = configService.getSync();
@@ -20,8 +20,11 @@ angular.module('copayApp.controllers').controller('preferencesController',
       fc = profileService.focusedClient;
       if (fc) {
         $scope.encryptEnabled = walletService.isEncrypted(fc);
-        if (fc.isPrivKeyExternal)
-          $scope.externalSource = fc.getPrivKeyExternalSourceName() == 'ledger' ? 'Ledger' : 'Trezor';
+        if (fc.isPrivKeyExternal) {
+          $scope.externalSource = lodash.find(walletService.externalSource, function(source) {
+            return source.id == fc.getPrivKeyExternalSourceName();
+          }).name;
+        }
 
         // TODO externalAccount
         //this.externalIndex = fc.getExternalIndex();

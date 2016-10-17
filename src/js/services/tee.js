@@ -1,11 +1,18 @@
 'use strict';
 
 angular.module('copayApp.services')
-  .factory('tee', function($log, $timeout, gettext, lodash, bitcore, hwWallet, bwcService) {
+  .factory('intelTEE', function($log, $timeout, gettext, lodash, bitcore, hwWallet, bwcService) {
 
     var root = {};
     var IntelWallet = require('intelWalletCon');
     var TEE_APP_ID = '63279de1b6cb4dcf8c206716bd318092f8c206716bd31809263279de1b6cb4dc';
+
+    root.description = {
+      id: 'intelTEE',
+      name: 'Intel TEE',
+      longName: 'Intel TEE Hardware Wallet',
+      derivationStrategy: 'BIP44'
+    };
 
     root.walletEnclave = new IntelWallet.Wallet();
     var walletEnclaveStatus = root.walletEnclave.initializeEnclave();
@@ -22,14 +29,14 @@ angular.module('copayApp.services')
           if (err) return callback(err);
 
           opts.entropySource = entropySource;
-          root.getXPubKey(opts.hwInfo.id, hwWallet.getAddressPath('tee', isMultisig, opts.account, opts.networkName), function(data) {
+          root.getXPubKey(opts.hwInfo.id, hwWallet.getAddressPath(root.description.id, isMultisig, opts.account, opts.networkName), function(data) {
             if (!data.success) {
               $log.warn(data.message);
               return callback(data);
             }
             opts.extendedPublicKey = data.xpubkey;
-            opts.externalSource = 'tee';
-            opts.derivationStrategy = 'BIP44';
+            opts.externalSource = root.description.id;
+            opts.derivationStrategy = root.description.derivationStrategy;
 
             return callback(null, opts);
           });
@@ -62,7 +69,7 @@ angular.module('copayApp.services')
     };
 
     root.getEntropySource = function(teeWalletId, isMultisig, account, callback) {
-      root.getXPubKey(teeWalletId, hwWallet.getEntropyPath('tee', isMultisig, account), function(data) {
+      root.getXPubKey(teeWalletId, hwWallet.getEntropyPath(root.description.id, isMultisig, account), function(data) {
         if (!data.success)
           return callback(hwWallet._err(data));
 
@@ -71,20 +78,29 @@ angular.module('copayApp.services')
     };
 
     root.signTx = function(teeWalletId, txp, callback) {
-      var purpose = 44;
-      var basePath = "m/" + purpose + "'/" + (txp.network == 'livenet' ? "0'" : "1'") + "/0'";
+      var account = 0; // TODO
+      var isMultisig = txp.requiredSignatures > 1;
+      var basePath = hwWallet.getAddressPath(root.description.id, isMultisig, account, txp.network);
 
       var rawTx = bwcService.Client.getRawTx(txp);
       var keypaths = lodash.map(lodash.pluck(txp.inputs, 'path'), function(path) {
         return path.replace('m', basePath);
       });
       var publicKeys = lodash.pluck(txp.inputs, 'publicKeys');
+      var changePublicKeys = txp.changeAddress.publicKeys;
+      publicKeys.push(changePublicKeys);
+      
       var changeaddrpath;
       if (txp.changeAddress) {
         changeaddrpath = txp.changeAddress.path.replace('m', basePath);
       }
 
-      var result = root.walletEnclave.signTransaction(teeWalletId, rawTx, changeaddrpath, keypaths);
+      var result;
+      if (txp.requiredSignatures == 1) {
+        result = root.walletEnclave.signTransaction(teeWalletId, rawTx, changeaddrpath, keypaths);
+      } else {
+        result = root.walletEnclave.signTransaction(teeWalletId, rawTx, changeaddrpath, keypaths, publicKeys, txp.requiredSignatures, changePublicKeys, txp.requiredSignatures);
+      }
 
       if (result.Status != teeWalletId) {
         return callback('TEE failed to sign transction: ' + result.Status);
@@ -135,7 +151,7 @@ angular.module('copayApp.services')
             break;
           default:
             opts.hwInfo = {
-              name: 'tee',
+              name: root.description.id,
               id: teeStatus
             };
             $log.debug('TEE wallet created: ' + opts.hwInfo);

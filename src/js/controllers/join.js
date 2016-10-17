@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('copayApp.controllers').controller('joinController',
-  function($scope, $rootScope, $timeout, go, notification, profileService, configService, storageService, applicationService, gettext, lodash, ledger, trezor, platformInfo, derivationPathHelper, ongoingProcess) {
+  function($scope, $rootScope, $timeout, go, notification, profileService, configService, storageService, applicationService, gettext, lodash, ledger, trezor, platformInfo, derivationPathHelper, ongoingProcess, walletService) {
 
     var isChromeApp = platformInfo.isChromeApp;
     var isDevel = platformInfo.isDevel;
@@ -31,15 +31,15 @@ angular.module('copayApp.controllers').controller('joinController',
 
       if (isChromeApp) {
         self.seedOptions.push({
-          id: 'ledger',
-          label: 'Ledger Hardware Wallet',
+          id: walletService.externalSource.ledger.id,
+          label: walletService.externalSource.ledger.longName
         });
       }
 
       if (isChromeApp || isDevel) {
         self.seedOptions.push({
-          id: 'trezor',
-          label: 'Trezor Hardware Wallet',
+          id: walletService.externalSource.trezor.id,
+          label: walletService.externalSource.ledger.longName
         });
       }
     };
@@ -95,19 +95,19 @@ angular.module('copayApp.controllers').controller('joinController',
         return;
       }
 
-      if (self.seedSourceId == 'ledger' || self.seedSourceId == 'trezor') {
+      if (self.seedSourceId == walletService.externalSource.ledger.id || self.seedSourceId == walletService.externalSource.trezor.id) {
         var account = $scope.account;
         if (!account || account < 1) {
           this.error = gettext('Invalid account number');
           return;
         }
 
-        if (self.seedSourceId == 'trezor')
+        if (self.seedSourceId == walletService.externalSource.trezor.id)
           account = account - 1;
 
         opts.account = account;
         ongoingProcess.set('connecting' + self.seedSourceId, true);
-        var src = self.seedSourceId == 'ledger' ? ledger : trezor;
+        var src = self.seedSourceId == walletService.externalSource.ledger.id ? ledger : trezor;
 
         src.getInfoForNewWallet(true, account, function(err, lopts) {
           ongoingProcess.set('connecting' + self.seedSourceId, false);

@@ -57,14 +57,14 @@
         </span>
       </li>
 
-      <li class="line-b p20 oh" ng-show="index.externalSource">
+      <li class="line-b p20 oh" ng-show="externalSource">
         <span>Hardware Wallet</span>
         <span class="right text-gray capitalize">
-          {{index.externalSource}}
+          {{externalSource}}
         </span>
       </li>
 
-      <li class="line-b p20 oh" ng-show="!index.externalSource && !index.canSign">
+      <li class="line-b p20 oh" ng-show="!externalSource && !index.canSign">
         <span translate></span>
         <span class="right text-gray capitalize">
           No private key

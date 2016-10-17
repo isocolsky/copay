@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('copayApp.controllers').controller('importController',
-  function($scope, $rootScope, $timeout, $log, profileService, configService, notification, go, sjcl, gettext, ledger, trezor, tee, derivationPathHelper, platformInfo, bwcService, ongoingProcess) {
+  function($scope, $rootScope, $timeout, $log, profileService, configService, notification, go, sjcl, gettext, ledger, trezor, derivationPathHelper, platformInfo, bwcService, ongoingProcess, walletService) {
 
     var isChromeApp = platformInfo.isChromeApp;
     var isNW = platformInfo.isNW;
@@ -19,24 +19,17 @@ angular.module('copayApp.controllers').controller('importController',
 
       if (isChromeApp) {
         $scope.seedOptions.push({
-          id: 'ledger',
-          label: 'Ledger Hardware Wallet',
+          id: walletService.externalSource.ledger.id,
+          label: walletService.externalSource.ledger.longName
         });
       }
 
       if (isChromeApp || isDevel) {
         $scope.seedOptions.push({
-          id: 'trezor',
-          label: 'Trezor Hardware Wallet',
+          id: walletService.externalSource.trezor.id,
+          label: walletService.externalSource.ledger.longName
         });
         $scope.seedSource = $scope.seedOptions[0];
-      }
-
-      if (isNW) {
-        $scope.seedOptions.push({
-          id: 'tee',
-          label: 'Intel TEE Wallet',
-        });
       }
     };
 
@@ -296,7 +289,7 @@ angular.module('copayApp.controllers').controller('importController',
           return;
         }
 
-        lopts.externalSource = 'trezor';
+        lopts.externalSource = walletService.externalSource.trezor.id;
         lopts.bwsurl = $scope.bwsurl;
         ongoingProcess.set('importingWallet', true);
         $log.debug('Import opts', lopts);
@@ -329,7 +322,7 @@ angular.module('copayApp.controllers').controller('importController',
 
       var account = +$scope.account;
 
-      if ($scope.seedSourceId == 'trezor') {
+      if ($scope.seedSourceId == walletService.externalSource.trezor.id) {
         if (account < 1) {
           $scope.error = gettext('Invalid account number');
           return;
@@ -338,17 +331,13 @@ angular.module('copayApp.controllers').controller('importController',
       }
 
       switch ($scope.seedSourceId) {
-        case ('ledger'):
+        case (walletService.externalSource.ledger.id):
           ongoingProcess.set('connectingledger', true);
           $scope.importLedger(account);
           break;
-        case ('trezor'):
+        case (walletService.externalSource.trezor.id):
           ongoingProcess.set('connectingtrezor', true);
           $scope.importTrezor(account, $scope.isMultisig);
-          break;
-        case ('tee'):
-          ongoingProcess.set('connectingtee', true);
-          $scope.importTEE(account, $scope.isMultisig);
           break;
         default:
           throw ('Error: bad source id');
@@ -373,36 +362,7 @@ angular.module('copayApp.controllers').controller('importController',
           return;
         }
 
-        lopts.externalSource = 'ledger';
-        lopts.bwsurl = $scope.bwsurl;
-        ongoingProcess.set('importingWallet', true);
-        $log.debug('Import opts', lopts);
-
-        profileService.importExtendedPublicKey(lopts, function(err, walletId) {
-          ongoingProcess.set('importingWallet', false);
-          if (err) {
-            $scope.error = err;
-            return $timeout(function() {
-              $scope.$apply();
-            });
-          }
-          $rootScope.$emit('Local/WalletImported', walletId);
-          notification.success(gettext('Success'), gettext('Your wallet has been imported correctly'));
-          go.walletHome();
-        });
-      }, 100);
-    };
-
-    $scope.importTEE = function(account, isMultisig) {
-      tee.getInfoForNewWallet(isMultisig, account, function(err, lopts) {
-        ongoingProcess.clear();
-        if (err) {
-          $scope.error = err;
-          $scope.$apply();
-          return;
-        }
-
-        lopts.externalSource = 'tee';
+        lopts.externalSource = walletService.externalSource.ledger.id;
         lopts.bwsurl = $scope.bwsurl;
         ongoingProcess.set('importingWallet', true);
         $log.debug('Import opts', lopts);

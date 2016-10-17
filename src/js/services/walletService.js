@@ -1,10 +1,16 @@
 'use strict';
 
 // DO NOT INCLUDE STORAGE HERE \/ \/
-angular.module('copayApp.services').factory('walletService', function($log, lodash, trezor, ledger, tee, storageService, configService, uxLanguage) {
+angular.module('copayApp.services').factory('walletService', function($log, lodash, trezor, ledger, intelTEE, storageService, configService, uxLanguage) {
 // DO NOT INCLUDE STORAGE HERE ^^
   
   var root = {};
+
+  root.externalSource = {
+    ledger: ledger.description,
+    trezor: trezor.description,
+    intelTEE: intelTEE.description
+  }
 
   var _signWithLedger = function(client, txp, cb) {
     $log.info('Requesting Ledger Chrome app to sign the transaction');
@@ -34,13 +40,13 @@ angular.module('copayApp.services').factory('walletService', function($log, loda
     });
   };
 
-  var _signWithTEE = function(client, txp, cb) {
-    $log.info('Requesting TEE to sign the transaction');
+  var _signWithIntelTEE = function(client, txp, cb) {
+    $log.info('Requesting Intel TEE to sign the transaction');
 
-    tee.signTx(client.credentials.hwInfo.id, txp, function(err, result) {
+    intelTEE.signTx(client.credentials.hwInfo.id, txp, function(err, result) {
       if (err) return cb(err);
 
-      $log.debug('TEE response', result);
+      $log.debug('Intel TEE response', result);
       txp.signatures = result.Signatures;
       return client.signTxProposal(txp, cb);
     });
@@ -140,12 +146,12 @@ angular.module('copayApp.services').factory('walletService', function($log, loda
 
     if (client.isPrivKeyExternal()) {
       switch (client.getPrivKeyExternalSourceName()) {
-        case 'ledger':
+        case root.externalSource.ledger.id:
           return _signWithLedger(client, txp, cb);
-        case 'trezor':
+        case root.externalSource.trezor.id:
           return _signWithTrezor(client, txp, cb);
-        case 'tee':
-          return _signWithTEE(client, txp, cb);
+        case root.externalSource.intelTEE.id:
+          return _signWithIntelTEE(client, txp, cb);
         default:
           var msg = 'Unsupported External Key:' + client.getPrivKeyExternalSourceName();
           $log.error(msg);

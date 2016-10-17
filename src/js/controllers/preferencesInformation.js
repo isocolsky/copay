@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('copayApp.controllers').controller('preferencesInformation',
-  function($scope, $log, $timeout, platformInfo, gettextCatalog, lodash, profileService, configService, go) {
+  function($scope, $log, $timeout, platformInfo, gettextCatalog, lodash, profileService, configService, go, walletService) {
     var base = 'xpub';
     var fc = profileService.focusedClient;
     var c = fc.credentials;
@@ -24,6 +24,9 @@ angular.module('copayApp.controllers').controller('preferencesInformation',
       $scope.N = c.n;
       $scope.pubKeys = lodash.pluck(c.publicKeyRing, 'xPubKey');
       $scope.addrs = null;
+      $scope.externalSource = lodash.find(walletService.externalSource, function(source) {
+        return source.id == fc.getPrivKeyExternalSourceName();
+      }).name;
 
       fc.getMainAddresses({
         doNotVerify: true

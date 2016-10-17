@@ -29,7 +29,7 @@ angular.module('copayApp.services')
           path = root.UNISIG_ROOTPATH;
         }
       }
-      if (device == 'tee') {
+      if (device == 'intelTEE') {
         path = root.M + path;
       }
       return path;
@@ -57,7 +57,7 @@ angular.module('copayApp.services')
         return path + "0'/";
       }
 
-      if (device == 'tee') {
+      if (device == 'intelTEE') {
         path = root.M + path;
       }
 
