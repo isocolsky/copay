@@ -77,6 +77,15 @@ angular.module('copayApp.services')
       });
     };
 
+    root.showMneumonic = function(teeWalletId, cb) {
+      result = root.walletEnclave.displayWordList(teeWalletId, 'en');
+      if (result != teeWalletId) {
+        cb('Error: ' + result);
+      } else {
+        cb();
+      }
+    };
+
     root.signTx = function(teeWalletId, txp, callback) {
       var account = 0; // TODO
       var isMultisig = txp.requiredSignatures > 1;

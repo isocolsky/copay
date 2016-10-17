@@ -89,6 +89,17 @@ angular.module('copayApp.services').factory('walletService', function($log, loda
     }
   };
 
+  root.showMneumonic = function(fc, cb) {
+    switch (fc.getPrivKeyExternalSourceName()) {
+      case root.externalSource.intelTEE.id:
+        return intelTEE.showMneumonic(fc.credentials.hwInfo.id, cb);
+        break;
+      default:
+        cb('Error: unrecognized external source');
+        break;
+    }
+  };
+
   root.createTx = function(client, txp, cb) {
     if (lodash.isEmpty(txp) || lodash.isEmpty(client))
       return cb('MISSING_PARAMETER');

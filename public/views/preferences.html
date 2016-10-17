@@ -37,9 +37,10 @@
       <div translate>Color</div>
     </li>
 
-    <li ng-show="index.isPrivKeyExternal">
-      <div class="right text-gray m10r">
+    <li href ui-sref="preferencesExternal" ng-show="index.isPrivKeyExternal">
+      <div class="right text-gray">
         {{externalSource}}
+        <i class="icon-arrow-right3 size-24 right"></i>
       </div>
       <div translate>Hardware wallet</div>
     </li>

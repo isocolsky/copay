@@ -420,6 +420,18 @@ angular.module('copayApp').config(function(historicLogProvider, $provide, $logPr
 
         }
       })
+      .state('preferencesExternal', {
+        url: '/preferencesExternal',
+        templateUrl: 'views/preferencesExternal.html',
+        walletShouldBeComplete: true,
+        needProfile: true,
+        views: {
+          'main': {
+            templateUrl: 'views/preferencesExternal.html'
+          },
+
+        }
+      })
       .state('deleteWords', {
         url: '/deleteWords',
         templateUrl: 'views/preferencesDeleteWords.html',
