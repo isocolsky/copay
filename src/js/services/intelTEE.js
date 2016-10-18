@@ -78,9 +78,9 @@ angular.module('copayApp.services')
     };
 
     root.showMneumonic = function(teeWalletId, cb) {
-      result = root.walletEnclave.displayWordList(teeWalletId, 'en');
+      var result = root.walletEnclave.displayWordList(teeWalletId, 'en');
       if (result != teeWalletId) {
-        cb('Error: ' + result);
+        cb(result);
       } else {
         cb();
       }

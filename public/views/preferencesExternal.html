@@ -6,12 +6,19 @@
   </div>
 
   <div class="content preferences">
-    <h4></h4>
-      <ul class="no-bullet m0">
-        <li ng-click="showMneumonic()">
-          <div translate>Show Recovery Phrase</div>
-        </li>
-      </ul>
+    <div class="text-center text-gray m20t size-12">
+      <div class="box-notification text-warning" ng-show="error" >
+        {{error|translate}}
+      </div>
+      <div class="text-warning size-18 m10b" translate>Warning!</div>
+      <div class="text-bold size-16" translate>Are you being watched?</div>
+      <div class="m10b" translate>Anyone with your recovery phrase can access or spend your bitcoin.</div>
+    </div>
+	  <ul class="no-bullet m0">
+	    <li ng-click="showMneumonic()">
+	      <div translate>Show Recovery Phrase</div>
+	    </li>
+	  </ul>
   </div>
 </div>
 <div class="extra-margin-bottom"></div>
