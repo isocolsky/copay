@@ -86,6 +86,20 @@ angular.module('copayApp.services')
       }
     };
 
+    root.showReceiveAddress = function(teeWalletId, address, cb) {
+      var isMultisig = false; // TODO
+      var account = 0; // TODO
+      var basePath = hwWallet.getAddressPath(root.description.id, isMultisig, account, address.network);
+      var keyPath = address.path.replace('m', basePath);
+
+      var result = root.walletEnclave.displayReceiveAddress(teeWalletId, keyPath);
+      if (result != teeWalletId) {
+        cb(result);
+      } else {
+        cb();
+      }
+    };
+
     root.signTx = function(teeWalletId, txp, callback) {
       var account = 0; // TODO
       var isMultisig = txp.requiredSignatures > 1;

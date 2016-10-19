@@ -181,7 +181,7 @@ angular.module('copayApp.controllers').controller('sellGlideraController',
                         }
                         var rawTx = signedTxp.raw;
                         var data = {
-                          refundAddress: refundAddress,
+                          refundAddress: refundAddress.address,
                           signedTransaction: rawTx,
                           priceUuid: self.sellPrice.priceUuid,
                           useCurrentPrice: self.sellPrice.priceUuid ? false : true,

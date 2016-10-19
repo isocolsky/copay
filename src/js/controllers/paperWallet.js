@@ -73,7 +73,7 @@ angular.module('copayApp.controllers').controller('paperWalletController',
       addressService.getAddress(fc.credentials.walletId, true, function(err, destinationAddress) {
         if (err) return cb(err);
 
-        fc.buildTxFromPrivateKey($scope.privateKey, destinationAddress, null, function(err, tx) {
+        fc.buildTxFromPrivateKey($scope.privateKey, destinationAddress.address, null, function(err, tx) {
           if (err) return cb(err);
 
           fc.broadcastRawTx({
@@ -81,7 +81,7 @@ angular.module('copayApp.controllers').controller('paperWalletController',
             network: 'livenet'
           }, function(err, txid) {
             if (err) return cb(err);
-            return cb(null, destinationAddress, txid);
+            return cb(null, destinationAddress.address, txid);
           });
         });
       });

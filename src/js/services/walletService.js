@@ -89,10 +89,21 @@ angular.module('copayApp.services').factory('walletService', function($log, loda
     }
   };
 
-  root.showMneumonic = function(fc, cb) {
+  root.showMneumonicFromHardware = function(fc, cb) {
     switch (fc.getPrivKeyExternalSourceName()) {
       case root.externalSource.intelTEE.id:
         return intelTEE.showMneumonic(fc.credentials.hwInfo.id, cb);
+        break;
+      default:
+        cb('Error: unrecognized external source');
+        break;
+    }
+  };
+
+  root.showReceiveAddressFromHardware = function(fc, address, cb) {
+    switch (fc.getPrivKeyExternalSourceName()) {
+      case root.externalSource.intelTEE.id:
+        return intelTEE.showReceiveAddress(fc.credentials.hwInfo.id, address, cb);
         break;
       default:
         cb('Error: unrecognized external source');

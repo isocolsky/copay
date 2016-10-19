@@ -141,7 +141,7 @@ angular.module('copayApp.controllers').controller('addressbookController', funct
             return;
           }
 
-          self.setForm(addr);
+          self.setForm(addr.address);
           $scope.cancel();
         });
       }

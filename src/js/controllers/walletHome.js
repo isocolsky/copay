@@ -201,10 +201,25 @@ angular.module('copayApp.controllers').controller('walletHomeController', functi
           if (addr)
             self.addr = addr;
         }
-
         $scope.$digest();
       });
     });
+  };
+
+  this.shouldShowReceiveAddressFromHardware = function() {
+    var fc = profileService.focusedClient;
+    if (fc.credentials.hwInfo) {
+      return (fc.credentials.hwInfo.name == walletService.externalSource.intelTEE.id);
+    } else {
+      return false;
+    }
+  };
+
+  $scope.showReceiveAddressFromHardware = function() {
+    var fc = profileService.focusedClient;
+    if (fc.credentials.hwInfo.name) {
+      walletService.showReceiveAddressFromHardware(fc, self.addr, function(){});
+    }
   };
 
   this.copyToClipboard = function(addr, $event) {

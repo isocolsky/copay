@@ -8,8 +8,8 @@ angular.module('copayApp.controllers').controller('preferencesExternalController
     return source.id == fc.getPrivKeyExternalSourceName();
   }).name;
 
-  $scope.showMneumonic = function() {
-  	walletService.showMneumonic(fc, function(err) {
+  $scope.showMneumonicFromHardware = function() {
+  	walletService.showMneumonicFromHardware(fc, function(err) {
   	  if (err) {
   	  	$log.error('Error: failed to display wallet mneumonic (' + err + ')');
   	  	$scope.error = gettext('Error: cannot display wallet recovery phrase');

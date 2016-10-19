@@ -94,7 +94,7 @@ angular.module('copayApp.controllers').controller('buyGlideraController',
             return;
           }
           var data = {
-            destinationAddress: walletAddr,
+            destinationAddress: walletAddr.address,
             qty: self.buyPrice.qty,
             priceUuid: self.buyPrice.priceUuid,
             useCurrentPrice: false,

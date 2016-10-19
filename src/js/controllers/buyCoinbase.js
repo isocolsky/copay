@@ -119,7 +119,7 @@ angular.module('copayApp.controllers').controller('buyCoinbaseController',
                 };
                 return;
               }
-              updatedTx.data['toAddr'] = addr;
+              updatedTx.data['toAddr'] = addr.address;
               coinbaseService.savePendingTransaction(updatedTx.data, {}, function(err) {
                 if (err) $log.debug(err);
                 if (updatedTx.data.status == 'completed') {

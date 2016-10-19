@@ -41,17 +41,16 @@ angular.module('copayApp.services')
               limit: 1
             }, function(err, addr) {
               if (err) return cb(err);
-              return cb(null, addr[0].address);
+              return cb(null, addr[0]);
             });
           }
           return bwcError.cb(err, prefix, cb);
         }
-        return cb(null, addr.address);
+        return cb(null, addr);
       });
     };
 
     root.getAddress = function(walletId, forceNew, cb) {
-
       var firstStep;
       if (forceNew) {
         firstStep = storageService.clearLastAddress;
@@ -67,7 +66,9 @@ angular.module('copayApp.services')
         storageService.getLastAddress(walletId, function(err, addr) {
           if (err) return cb(err);
 
-          if (addr) return cb(null, addr);
+          // Checking for last address is string will force new last address to be created and
+          // stored (upgrades storage of lastAddress).
+          if (addr && typeof addr != 'string') return cb(null, addr);
 
           root._createAddress(walletId, function(err, addr) {
             if (err) return cb(err);
